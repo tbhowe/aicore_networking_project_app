@@ -2,8 +2,8 @@ import requests
 import json
 
 # Define the base URL of your API
-base_url = "http://localhost:8000/api/add_new_item"
-
+# base_url = "http://localhost:8000/api/add_new_item"
+base_url = "http://34.244.139.0:8000/api/add_new_item"
 # Define a list of possible items
 items = [
     {"item_id": "001", "product_name": "Widget", "manufacturer": "Widgets Inc.", "product_quantity": 50},

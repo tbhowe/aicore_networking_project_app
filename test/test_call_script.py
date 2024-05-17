@@ -3,7 +3,8 @@ import random
 import json
 
 # Define the base URL of your API
-base_url = "http://localhost:8000"
+# base_url = "http://localhost:8000"
+base_url = "http://34.244.139.0:8000"
 
 # Define a set of possible items
 items = [
