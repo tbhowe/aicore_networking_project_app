@@ -1,10 +1,70 @@
-
-from dbsession import AppDatabaseSession
-from ORM_schema import Item, Inventory
 from fastapi import FastAPI, Request, HTTPException, Depends
+from sqlalchemy import Column, Integer, String
+from sqlalchemy.orm import declarative_base
+from pydantic import BaseModel
+from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy.exc import NoResultFound, IntegrityError
 from sqlalchemy.orm import sessionmaker, declarative_base, Session
+from sqlalchemy.orm import declarative_base
+from sqlalchemy.engine.reflection import Inspector
 import logging
 import json
+import yaml
+
+Base = declarative_base()
+# ORM schema
+class Inventory(Base):
+    __tablename__ = 'inventory'
+    item_id = Column(String, primary_key=True)
+    product_name = Column(String)
+    manufacturer = Column(String)
+    product_quantity = Column(Integer)
+
+# Pydantic model
+class Item(BaseModel):
+    item_id: str
+    product_name: str
+    manufacturer: str
+    product_quantity: int
+
+# Create AppDatabaseSession class
+
+class AppDatabaseSession:
+
+    def __init__(self, credsfile='creds.yaml'):
+        self.creds = self.load_credentials(credsfile)
+        self.db_url = f"postgresql+psycopg2://{self.creds['username']}:{self.creds['password']}@{self.creds['host']}:{self.creds['port']}/{self.creds['database_name']}"
+        try:
+            self.engine = create_engine(self.db_url)
+            print("engine created")
+        except Exception as e:
+            print(f' DB creation Error: {str(e)}')
+
+        try:   
+            self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
+            print("session created")
+        except Exception as e:
+            print(f' Session creation Error: {str(e)}')
+
+        self.Base = declarative_base()
+        
+       # Try to create tables
+        try:
+            Base.metadata.create_all(bind=self.engine)
+            print("Tables created")
+            inspector = Inspector.from_engine(self.engine)
+            print("Available tables:", inspector.get_table_names())
+        except Exception as e:
+            print(f"Error creating tables: {str(e)}")
+
+        # Load credentials from the YAML file
+    @staticmethod
+    def load_credentials(filepath='creds.yaml'):
+        
+        with open(filepath, 'r') as file:
+            data = yaml.safe_load(file)
+            print("creds loaded")
+        return data
 
 # Initialise App, DB session, logging
 app = FastAPI()
@@ -34,6 +94,11 @@ async def log_requests(request: Request, call_next):
     logging.info(json.dumps(log_data))
    
     return response
+
+
+@app.get("/")
+def read_root():
+    return {"message": "How many times have I told you not to call this endpoint?"}
 
 # FastAPI endpoints
 @app.post("/api/add_new_item")
@@ -71,7 +136,11 @@ async def delete_item(product_name: str, db: Session = Depends(get_db)):
     db.commit()
     return {"message": f"Deleted item {product_name}"}
 
+@app.get("/api/view_all_items")
+async def view_all_items(db: Session = Depends(get_db)):
+    items = db.query(Inventory).all()
+    return items
+
 if __name__ == '__main__':
     import uvicorn
-    uvicorn.run(app, host='0.0.0.0', port=80, log_level="debug")
-
+    uvicorn.run(app, host='0.0.0.0', port=8000, log_level="debug")
