@@ -101,7 +101,7 @@ def read_root():
     return {"message": "How many times have I told you not to call this endpoint?"}
 
 # FastAPI endpoints
-@app.post("/api/add-new-item")
+@app.post("/api/add_new_item")
 async def add_new_item(item: Item, db: Session = Depends(get_db)):
     existing_item = db.query(Inventory).filter_by(item_id=item.item_id).first()
     if existing_item:
@@ -111,7 +111,7 @@ async def add_new_item(item: Item, db: Session = Depends(get_db)):
     db.commit()
     return {"message": f"Added new item {item.product_name} with quantity {item.product_quantity}"}
 
-@app.post("/api/update-stock-item-number")
+@app.post("/api/update_stock_item_number")
 async def update_stock_item_number(item: Item, db: Session = Depends(get_db)):
     inventory_item = db.query(Inventory).filter_by(item_id=item.item_id).one_or_none()
     if not inventory_item:
@@ -120,14 +120,14 @@ async def update_stock_item_number(item: Item, db: Session = Depends(get_db)):
     db.commit()
     return {"message": f"Updated stock for {item.product_name} by {item.product_quantity}"}
 
-@app.get("/api/view-current-stock/{product_name}")
+@app.get("/api/view_current_stock/{product_name}")
 async def view_current_stock(product_name: str, db: Session = Depends(get_db)):
     inventory_item = db.query(Inventory).filter_by(product_name=product_name).one_or_none()
     if not inventory_item:
         raise HTTPException(status_code=404, detail="Item not found")
     return {"product_name": inventory_item.product_name, "quantity": inventory_item.product_quantity}
 
-@app.delete("/api/delete-item/{product_name}")
+@app.delete("/api/delete_item/{product_name}")
 async def delete_item(product_name: str, db: Session = Depends(get_db)):
     inventory_item = db.query(Inventory).filter_by(product_name=product_name).one_or_none()
     if not inventory_item:
@@ -136,7 +136,7 @@ async def delete_item(product_name: str, db: Session = Depends(get_db)):
     db.commit()
     return {"message": f"Deleted item {product_name}"}
 
-@app.get("/api/view-all-items")
+@app.get("/api/view_all_items")
 async def view_all_items(db: Session = Depends(get_db)):
     items = db.query(Inventory).all()
     return items
