@@ -120,12 +120,17 @@ async def update_stock_item_number(item: Item, db: Session = Depends(get_db)):
     db.commit()
     return {"message": f"Updated stock for {item.product_name} by {item.product_quantity}"}
 
-@app.get("/api/view_current_stock/{product_name}")
-async def view_current_stock(product_name: str, db: Session = Depends(get_db)):
-    inventory_item = db.query(Inventory).filter_by(product_name=product_name).one_or_none()
+@app.get("/api/view_current_stock/{item_id}")
+async def view_current_stock(item_id: str, db: Session = Depends(get_db)):
+    inventory_item = db.query(Inventory).filter_by(item_id=item_id).one_or_none()
     if not inventory_item:
         raise HTTPException(status_code=404, detail="Item not found")
-    return {"product_name": inventory_item.product_name, "quantity": inventory_item.product_quantity}
+    return {
+        "item_id": inventory_item.item_id,
+        "product_name": inventory_item.product_name,
+        "manufacturer": inventory_item.manufacturer,
+        "quantity": inventory_item.product_quantity
+    }
 
 @app.delete("/api/delete_item/{product_name}")
 async def delete_item(product_name: str, db: Session = Depends(get_db)):
