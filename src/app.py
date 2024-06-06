@@ -33,8 +33,8 @@ class Item(BaseModel):
 
 class AppDatabaseSession:
 
-    def __init__(self, secret_name=db_credentials):
-        self.creds = self.load_credentials(db_credentials)
+    def __init__(self, secret_name="db_credentials"):
+        self.creds = self.load_credentials(secret_name)
         self.db_url = f"postgresql+psycopg2://{self.creds['username']}:{self.creds['password']}@{self.creds['host']}:{self.creds['port']}/{self.creds['database_name']}"
         try:
             self.engine = create_engine(self.db_url)
