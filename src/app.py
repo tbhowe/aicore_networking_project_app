@@ -76,7 +76,7 @@ class AppDatabaseSession:
 
 # Initialise App, DB session, logging
 app = FastAPI()
-session_instance = AppDatabaseSession("creds.yaml")
+session_instance = AppDatabaseSession()
 logging.basicConfig(filename='access.log', level=logging.INFO, format='%(asctime)s - %(message)s')
 
 def get_db():
