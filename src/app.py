@@ -1,3 +1,4 @@
+from botocore.exceptions import ClientError
 from fastapi import FastAPI, Request, HTTPException, Depends
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import declarative_base
@@ -7,6 +8,7 @@ from sqlalchemy.exc import NoResultFound, IntegrityError
 from sqlalchemy.orm import sessionmaker, declarative_base, Session
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.engine.reflection import Inspector
+import boto3
 import logging
 import json
 import yaml
@@ -59,12 +61,18 @@ class AppDatabaseSession:
 
         # Load credentials from the YAML file
     @staticmethod
-    def load_credentials(filepath='creds.yaml'):
-        
-        with open(filepath, 'r') as file:
-            data = yaml.safe_load(file)
-            print("creds loaded")
-        return data
+    def load_credentials(secret_name):
+        # Create a Secrets Manager client
+        session = boto3.session.Session()
+        client = session.client(service_name='secretsmanager')
+        try:
+            get_secret_value_response = client.get_secret_value(SecretId=secret_name)
+        except ClientError as e:
+            print(f"Unable to retrieve secret: {e}")
+            return None
+        else:
+            secret = get_secret_value_response['SecretString']
+            return json.loads(secret)
 
 # Initialise App, DB session, logging
 app = FastAPI()
@@ -132,14 +140,14 @@ async def view_current_stock(item_id: str, db: Session = Depends(get_db)):
         "quantity": inventory_item.product_quantity
     }
 
-@app.delete("/api/delete_item/{product_name}")
-async def delete_item(product_name: str, db: Session = Depends(get_db)):
-    inventory_item = db.query(Inventory).filter_by(product_name=product_name).one_or_none()
+@app.delete("/api/delete_item/{item_id}")
+async def delete_item(item_id: str, db: Session = Depends(get_db)):
+    inventory_item = db.query(Inventory).filter_by(item_id=item_id).one_or_none()
     if not inventory_item:
         raise HTTPException(status_code=404, detail="Item not found")
     db.delete(inventory_item)
     db.commit()
-    return {"message": f"Deleted item {product_name}"}
+    return {"message": f"Deleted item with ID {item_id}"}
 
 @app.get("/api/view_all_items")
 async def view_all_items(db: Session = Depends(get_db)):
