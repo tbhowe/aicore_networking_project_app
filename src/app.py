@@ -63,7 +63,7 @@ class AppDatabaseSession:
     @staticmethod
     def load_credentials(secret_name):
         # Create a Secrets Manager client
-        session = boto3.session.Session()
+        session = boto3.session.Session(region_name='eu-north-1')
         client = session.client(service_name='secretsmanager')
         try:
             get_secret_value_response = client.get_secret_value(SecretId=secret_name)
